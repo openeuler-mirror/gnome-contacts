@@ -1,4 +1,4 @@
 version_control: gitlab.gnome
-src_repo: gnome-contacts
-tag_prefix: "^v"
-seperator: "."
+src_repo: GNOME Contacts
+tag_prefix: ^
+seperator: .
