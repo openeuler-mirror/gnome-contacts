@@ -1,0 +1,84 @@
+From 0e4907177d80097b29d74b1a8af3aeed36074196 Mon Sep 17 00:00:00 2001
+From: Niels De Graef <nielsdegraef@gmail.com>
+Date: Thu, 29 Sep 2022 18:41:21 +0200
+Subject: [PATCH] pane: Select the new individual after saving changes
+
+Fixes: https://gitlab.gnome.org/GNOME/gnome-contacts/-/issues/271
+---
+ src/contacts-contact-pane.vala | 16 ++++++++++++++--
+ src/core/contacts-contact.vala | 14 +++++++++++++-
+ 2 files changed, 27 insertions(+), 3 deletions(-)
+
+diff --git a/src/contacts-contact-pane.vala b/src/contacts-contact-pane.vala
+index ffdcbf33..ee9ee6c3 100644
+--- a/src/contacts-contact-pane.vala
++++ b/src/contacts-contact-pane.vala
+@@ -176,12 +176,24 @@ public class Contacts.ContactPane : Adw.Bin {
+     }
+ 
+     try {
+-      yield contact.apply_changes (this.store.aggregator.primary_store);
++      // The new individual. Even when editing an exisiting contact, it might
++      // be a different Individual than before, so make sure to adjust our
++      // selected contact afterwards
++      unowned var individual =
++          yield contact.apply_changes (this.store.aggregator.primary_store);
++      debug ("Applied changes resulted in individual (%s)",
++             (individual != null)? individual.id : "null");
++
++      if (individual != null) {
++        var pos = yield this.store.find_individual_for_id (individual.id);
++        if (pos != Gtk.INVALID_LIST_POSITION)
++          this.store.selection.selected = pos;
++      }
+     } catch (Error err) {
+       warning ("Couldn't save changes: %s", err.message);
++      show_contact (null);
+       // XXX do something better here
+     }
+-    show_contact_sheet (contact);
+   }
+ 
+   public void edit_contact () {
+diff --git a/src/core/contacts-contact.vala b/src/core/contacts-contact.vala
+index 866ec187..5fcc7425 100644
+--- a/src/core/contacts-contact.vala
++++ b/src/core/contacts-contact.vala
+@@ -258,14 +258,21 @@ public class Contacts.Contact : GLib.Object, GLib.ListModel {
+    * Applies any pending changes to all chunks. This can mean either a new
+    * persona is made, or it is saved in the chunk's referenced persona.
+    * When a new persona is made, it will be added to @store.
++   *
++   * Returns the Individual that was created from applying the changes
+    */
+-  public async void apply_changes (PersonaStore store) throws GLib.Error {
++  public async unowned Individual? apply_changes (PersonaStore store) throws GLib.Error {
++    unowned Individual? individual = null;
++
+     // For those that were a persona: save the properties using the API
+     for (uint i = 0; i < this.chunks.length; i++) {
+       unowned var chunk = this.chunks[i];
+       if (chunk.persona == null)
+         continue;
+ 
++      if (individual == null)
++        individual = chunk.persona.individual;
++
+       if (!(chunk.property_name in chunk.persona.writeable_properties)) {
+         warning ("Can't save to unwriteable property '%s' to persona %s",
+                  chunk.property_name, chunk.persona.uid);
+@@ -303,6 +310,11 @@ public class Contacts.Contact : GLib.Object, GLib.ListModel {
+       var persona = yield store.add_persona_from_details (new_details);
+       debug ("Successfully created new persona %p", persona);
+       // FIXME: should we set the persona for these chunks?
++
++      if (individual == null && persona != null)
++        individual = persona.individual;
+     }
++
++    return individual;
+   }
+ }
+-- 
+GitLab
+

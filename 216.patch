@@ -1,0 +1,29 @@
+From 5565cd0961aaa204599e0af57fd8806a65758c10 Mon Sep 17 00:00:00 2001
+From: Niels De Graef <nielsdegraef@gmail.com>
+Date: Fri, 14 Oct 2022 08:56:30 +0200
+Subject: [PATCH] main-window: Hide the link button
+
+There's definitely something going wrong with linking contacts, as it
+forgets any link between app restarts. Since we really don't want to
+expose something that's completely broken to our users, hide the button
+that allows the linking. It's a shitty workaround for now.
+---
+ data/ui/contacts-main-window.ui | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/data/ui/contacts-main-window.ui b/data/ui/contacts-main-window.ui
+index 3d01bdc7..fd8f0a17 100644
+--- a/data/ui/contacts-main-window.ui
++++ b/data/ui/contacts-main-window.ui
+@@ -167,7 +167,7 @@
+                                 </child>
+                                 <child>
+                                   <object class="GtkButton" id="link_button">
+-                                    <property name="focus_on_click">False</property>
++                                    <property name="visible">False</property>
+                                     <property name="label" translatable="yes" comments="Link refers to the verb, from linking contacts together">Link</property>
+                                     <property name="tooltip-text" translatable="yes">Link Selected Contacts Together</property>
+                                     <property name="action-name">win.link-marked-contacts</property>
+-- 
+GitLab
+
