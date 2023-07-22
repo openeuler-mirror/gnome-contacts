@@ -2,7 +2,7 @@
 
 Name:           gnome-contacts
 Version:        43.0
-Release:        1
+Release:        2
 Summary:        Contacts manager for GNOME
 License:        GPLv2+
 URL:            https://wiki.gnome.org/Apps/Contacts
@@ -41,6 +41,10 @@ Requires:       hicolor-icon-theme
 %autosetup -p1 -n %{name}-%{version}
 
 %build
+%if "%toolchain" == "clang"
+	export CFLAGS="$CFLAGS -Wno-error=return-type"
+	export CXXFLAGS="$CXXFLAGS -Wno-error=return-type"
+%endif
 export VALAFLAGS="-g"
 %meson
 %meson_build
@@ -73,6 +77,9 @@ desktop-file-validate %{buildroot}/%{_datadir}/applications/org.gnome.Contacts.d
 %{_mandir}/man1/gnome-contacts.1*
 
 %changelog
+* Sat Jul 15 2023 yoo <sunyuechi@iscas.ac.cn> - 43.0-2
+- fix clang build error
+
 * Mon Jan 02 2023 lin zhang <lin.zhang@turbolinux.com.cn> - 43.0-1
 - Update to 43.0
 
